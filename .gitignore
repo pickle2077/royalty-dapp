@@ -1,6 +1,9 @@
 node_modules
 .idea
 
+.env
+.env.test
+
 #Hardhat files
 cache
 artifacts
