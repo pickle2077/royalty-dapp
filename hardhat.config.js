@@ -9,6 +9,7 @@ require("./tasks/faucet");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.17",
+  // solidity: "0.4.17",
   networks: {
     emerald_local: {
       url: "http://localhost:8545",
@@ -27,6 +28,9 @@ module.exports = {
     },
   },
   mocha: {
+    timeout: 60000,
+  },
+  chai: {
     timeout: 60000,
   },
 };
