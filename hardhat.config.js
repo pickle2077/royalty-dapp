@@ -1,3 +1,5 @@
+require("@oasisprotocol/sapphire-hardhat");
+
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
@@ -25,6 +27,18 @@ module.exports = {
       url: "https://emerald.oasis.dev",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    sapphire_testnet: {
+      url: "https://testnet.sapphire.oasis.dev",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 0x5aff,
+    },
+    sapphire_mainnet: {
+      url: "https://sapphire.oasis.io",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 0x5afe,
     },
   },
   mocha: {

@@ -2,6 +2,7 @@ import React from "react";
 
 // We'll use ethers to interact with the Ethereum network and our contract
 import { ethers } from "ethers";
+import * as sapphire from "@oasisprotocol/sapphire-paratime";
 
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
@@ -11,7 +12,8 @@ import contractAddress from "../contracts/contract-address.json";
 import detectEthereumProvider from "@metamask/detect-provider";
 
 // This is the default id used by the Hardhat Network
-const HARDHAT_NETWORK_ID = "31337";
+// const HARDHAT_NETWORK_ID = "31337";
+const HARDHAT_NETWORK_ID = "23295"; // Sapphire Testnet
 
 // This is an error code that indicates that the user canceled a transaction
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
@@ -46,32 +48,34 @@ export class Dapp extends React.Component {
 
   connectWallet = async () => {
     // Request access to the user's accounts
-    this._provider = await detectEthereumProvider();
+    // this._provider = await detectEthereumProvider();
+    this._provider = sapphire.wrap(
+      new ethers.providers.Web3Provider(window.ethereum)
+    );
     if (!this._provider) {
       console.log("Please install MetaMask!");
       this.setState({ metamaskInstalled: false });
       return;
     }
 
-    const accounts = await this._provider.request({
+    const [address] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    const address = accounts[0];
     this.setState({ selectedAddress: address });
 
-    const networkName = await this._getNetworkName(this._provider);
+    const networkName = await this._getNetworkName();
     this.setState({ networkName });
 
     this._initialize(this.state.selectedAddress);
 
-    this._provider.on("chainChanged", async () => {
-      const networkName = await this._getNetworkName(this._provider);
+    window.ethereum.on("chainChanged", async () => {
+      const networkName = await this._getNetworkName();
       this.setState({ networkName });
 
       this._initialize(this.state.selectedAddress);
     });
 
-    this._provider.on("accountsChanged", ([newAddress]) => {
+    window.ethereum.on("accountsChanged", ([newAddress]) => {
       // this._stopPollingData();
 
       // `accountsChanged` event can be triggered with an undefined newAddress.
@@ -128,21 +132,38 @@ export class Dapp extends React.Component {
 
   async _initializeEthers() {
     // We first initialize ethers by creating a provider using window.ethereum
-    const provider = new ethers.providers.Web3Provider(this._provider);
+    // const provider = new ethers.providers.Web3Provider(this._provider);
+    const signer = this._provider.getSigner();
+
     // Now we can use ethers provider.getSigner method
-    const signer = provider.getSigner();
+    // const signer = provider.getSigner();
 
     // Then, we initialize the contract using that provider and the token's
     // artifact. You can do this same thing with your contracts.
+    // this._lottery = new ethers.Contract(
+    //   contractAddress.Lottery,
+    //   LotteryArtifact.abi,
+    //   signer
+    // );
     this._lottery = new ethers.Contract(
       contractAddress.Lottery,
       LotteryArtifact.abi,
-      signer
+      this._provider
+    );
+
+    this._lotteryWrite = new ethers.Contract(
+      contractAddress.Lottery,
+      LotteryArtifact.abi,
+      sapphire.wrap(
+        new ethers.providers.Web3Provider(window.ethereum).getSigner()
+      )
     );
   }
 
-  _getNetworkName = async (ethereumProvider) => {
-    const networkId = await ethereumProvider.request({ method: "net_version" });
+  _getNetworkName = async () => {
+    // const networkId = await ethereumProvider.request({ method: "net_version" });
+    const networkId = await window.ethereum.request({ method: "net_version" });
+    console.log(networkId);
     let networkName;
     switch (networkId) {
       case "42261":
@@ -150,6 +171,12 @@ export class Dapp extends React.Component {
         break;
       case "42262":
         networkName = "Emerald Mainnet";
+        break;
+      case "23295":
+        networkName = "Sapphire Testnet";
+        break;
+      case "23294":
+        networkName = "Sapphire Mainnet";
         break;
       default:
         networkName = "Unknown";
@@ -160,7 +187,7 @@ export class Dapp extends React.Component {
   enterLottery = async () => {
     try {
       const amountInWei = ethers.utils.parseEther(this.state.amountToEnter);
-      await this._lottery.enter({ value: amountInWei });
+      await this._lotteryWrite.enter({ value: amountInWei });
       this.updateList();
     } catch (error) {
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
@@ -178,7 +205,7 @@ export class Dapp extends React.Component {
   pickWinner = async () => {
     try {
       // Send a transaction to pickWinner method on the contract
-      await this._lottery.pickWinner();
+      await this._lotteryWrite.pickWinner();
 
       // Once the transaction is confirmed, get the winner
       // const winner = await this._lottery.winner();
