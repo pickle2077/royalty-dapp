@@ -53,25 +53,24 @@ export class Dapp extends React.Component {
       return;
     }
 
-    const accounts = await this._provider.request({
+    const [address] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    const address = accounts[0];
     this.setState({ selectedAddress: address });
 
-    const networkName = await this._getNetworkName(this._provider);
+    const networkName = await this._getNetworkName();
     this.setState({ networkName });
 
     this._initialize(this.state.selectedAddress);
 
-    this._provider.on("chainChanged", async () => {
-      const networkName = await this._getNetworkName(this._provider);
+    window.ethereum.on("chainChanged", async () => {
+      const networkName = await this._getNetworkName();
       this.setState({ networkName });
 
       this._initialize(this.state.selectedAddress);
     });
 
-    this._provider.on("accountsChanged", ([newAddress]) => {
+    window.ethereum.on("accountsChanged", ([newAddress]) => {
       // this._stopPollingData();
 
       // `accountsChanged` event can be triggered with an undefined newAddress.
@@ -128,9 +127,8 @@ export class Dapp extends React.Component {
 
   async _initializeEthers() {
     // We first initialize ethers by creating a provider using window.ethereum
-    const provider = new ethers.providers.Web3Provider(this._provider);
     // Now we can use ethers provider.getSigner method
-    const signer = provider.getSigner();
+    const signer = this._provider.getSigner();
 
     // Then, we initialize the contract using that provider and the token's
     // artifact. You can do this same thing with your contracts.
@@ -141,8 +139,8 @@ export class Dapp extends React.Component {
     );
   }
 
-  _getNetworkName = async (ethereumProvider) => {
-    const networkId = await ethereumProvider.request({ method: "net_version" });
+  _getNetworkName = async () => {
+    const networkId = await window.ethereum.request({ method: "net_version" });
     let networkName;
     switch (networkId) {
       case "42261":
@@ -150,6 +148,12 @@ export class Dapp extends React.Component {
         break;
       case "42262":
         networkName = "Emerald Mainnet";
+        break;
+      case "23295":
+        networkName = "Sapphire Testnet";
+        break;
+      case "23294":
+        networkName = "Sapphire Mainnet";
         break;
       default:
         networkName = "Unknown";
