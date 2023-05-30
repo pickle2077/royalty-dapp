@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
-import LotteryArtifact from "../contracts/Lottery.json";
+import DistributorArtifact from "../contracts/Distributor.json";
 import contractAddress from "../contracts/contract-address.json";
 
 import detectEthereumProvider from "@metamask/detect-provider";
@@ -46,7 +46,8 @@ export class Dapp extends React.Component {
 
   connectWallet = async () => {
     // Request access to the user's accounts
-    this._provider = await detectEthereumProvider();
+    this._provider = new ethers.providers.Web3Provider(window.ethereum);
+
     if (!this._provider) {
       console.log("Please install MetaMask!");
       this.setState({ metamaskInstalled: false });
@@ -133,8 +134,8 @@ export class Dapp extends React.Component {
     // Then, we initialize the contract using that provider and the token's
     // artifact. You can do this same thing with your contracts.
     this._lottery = new ethers.Contract(
-      contractAddress.Lottery,
-      LotteryArtifact.abi,
+      contractAddress.Distributor,
+      DistributorArtifact.abi,
       signer
     );
   }

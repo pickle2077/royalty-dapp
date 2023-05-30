@@ -22,8 +22,8 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const Lottery = await ethers.getContractFactory("Lottery");
-  const token = await Lottery.deploy();
+  const Distributor = await ethers.getContractFactory("Distributor");
+  const token = await Distributor.deploy();
   await token.deployed();
 
   console.log("Token address:", token.address);
@@ -48,13 +48,13 @@ function saveFrontendFiles(token) {
 
   fs.writeFileSync(
     path.join(contractsDir, "contract-address.json"),
-    JSON.stringify({ Token: token.address }, undefined, 2)
+    JSON.stringify({ Distributor: token.address }, undefined, 2)
   );
 
-  const TokenArtifact = artifacts.readArtifactSync("Lottery");
+  const TokenArtifact = artifacts.readArtifactSync("Distributor");
 
   fs.writeFileSync(
-    path.join(contractsDir, "Lottery.json"),
+    path.join(contractsDir, "Distributor.json"),
     JSON.stringify(TokenArtifact, null, 2)
   );
 }
