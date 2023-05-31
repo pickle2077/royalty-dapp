@@ -23,7 +23,9 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const Distributor = await ethers.getContractFactory("Distributor");
-  const token = await Distributor.deploy();
+  const token = await Distributor.deploy(
+    "0xb17f8f3a6f1f83cb5105ebc40cbb223852393439"
+  );
   await token.deployed();
 
   console.log("Token address:", token.address);

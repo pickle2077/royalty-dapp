@@ -58,6 +58,8 @@ contract Distributor {
     uint256 public undisbursedFunds;
     uint256 public disbursedFunds;
 
+    uint256 public lastDisbursement;
+
     // Mapping to store rewards for each address
     mapping(address => uint256) public rewards;
 
@@ -65,12 +67,11 @@ contract Distributor {
 
     constructor(address nftAddress) {
         nft = IMinimalERC721AQueryable(nftAddress);
-        undisbursedFunds = address(this).balance;
+        lastDisbursement = block.timestamp;
     }
 
     // Enable this contract to receive money
     receive() external payable {
-        undisbursedFunds += msg.value;
     }
 
     // Updates the totalTokens state variable with the current total supply of NFTs
@@ -80,6 +81,7 @@ contract Distributor {
 
     function disburseFunds() external {
         // Update totalTokens before calculating rewards
+        require(block.timestamp >= lastDisbursement + 1 minutes);
         updateTokenCount();
         require(totalTokens > 0, "No tokens minted yet");
 
@@ -89,29 +91,22 @@ contract Distributor {
         uint256 amountPerToken = (contractBalance-disbursedFunds) / totalTokens;
 
         // Loop through all tokens and update rewards for their holders
-        for (uint256 i = 1; i <= totalTokens; i++) {
+        for (uint256 i = 1; i <= 100; i++) {
             address tokenHolder = nft.ownerOf(i);
             rewards[tokenHolder] += amountPerToken;
         }
         disbursedFunds += amountPerToken*totalTokens;
+
+        lastDisbursement = block.timestamp;
     }
 
-    function disburseFunds2() external {
-        updateTokenCount();
-        require(totalTokens > 0, "No tokens minted yet");
-
-        // Calculate the rewards based on the contract's balance
-        uint256 contractBalance = address(this).balance;
-
-        uint256 amountPerToken = (contractBalance-disbursedFunds) / totalTokens;
-        for (uint16 i = 1; i <= totalTokens; i++) {
-            rewardsPerToken[i] += amountPerToken;
+    function timeUntilDisburse() public view returns (uint256) {
+        if(block.timestamp >= lastDisbursement + 1 minutes) {
+            return 0;
         }
-
-        disbursedFunds += amountPerToken*totalTokens;
+        // Otherwise return the remaining time
+        return (lastDisbursement + 1 minutes) - block.timestamp;
     }
-
-
     // Allows users to claim their rewards
 
     function claimRewards() external {
@@ -124,15 +119,4 @@ contract Distributor {
         
     }
 
-    function claimRewards2() external {
-        uint256 reward = 0;
-        uint256[] memory tokensOwned = nft.tokensOfOwner(msg.sender);
-
-        for (uint16 i = 0; i < tokensOwned.length; i++) {
-            reward += rewardsPerToken[tokensOwned[i]];
-        }
-
-        disbursedFunds -= reward;
-        payable(msg.sender).transfer(reward);
-    }
 }
