@@ -84,9 +84,10 @@ contract Distributor {
         require(block.timestamp >= lastDisbursement + 1 minutes);
         updateTokenCount();
         require(totalTokens > 0, "No tokens minted yet");
+        uint256 contractBalance = address(this).balance;
+        require((contractBalance-disbursedFunds)>totalTokens);
 
         // Calculate the rewards based on the contract's balance
-        uint256 contractBalance = address(this).balance;
 
         uint256 amountPerToken = (contractBalance-disbursedFunds) / totalTokens;
 
